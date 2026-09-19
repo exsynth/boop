@@ -57,6 +57,7 @@ public:
   std::vector<int> GetPos() const;
 
   // node properties
+  bool IsConst0(int nId) const;
   bool IsPi(int nId) const;
   bool IsInt(int nId) const;
   bool IsPo(int nId) const;
@@ -399,6 +400,8 @@ inline std::vector<int> AndNetwork::GetPisInts() const {
 inline std::vector<int> AndNetwork::GetPos() const { return vPos_; }
 
 // node properties
+
+inline bool AndNetwork::IsConst0(int nId) const { return nId == GetConst0(); }
 
 inline bool AndNetwork::IsPi(int nId) const {
   return GetNumFanins(nId) == 0 &&
@@ -1484,7 +1487,7 @@ inline bool AndNetwork::TrivialCollapse(int nId) {
     int nFaninEdge = vvFaninEdges_[nId][nIdx];
     int nFi = Edge2Node(nFaninEdge);
     bool fCompl = EdgeIsCompl(nFaninEdge);
-    if (!IsPi(nFi) && !fCompl && vRefs_[nFi] == 1) {
+    if (!IsPi(nFi) && !IsConst0(nFi) && !fCompl && vRefs_[nFi] == 1) {
       Action action;
       action.type = TRIVIAL_COLLAPSE;
       action.nId = nId;
@@ -1809,6 +1812,13 @@ inline void AndNetwork::Propagate(int nId) {
   auto it = lInts_.begin();
   if (nId == -1) {
     ForEachInt([&](int nId) {
+      for (int nIdx = 0; nIdx < GetNumFanins(nId);) {
+        if (GetFanin(nId, nIdx) == GetConst0() && GetCompl(nId, nIdx)) {
+          RemoveFanin(nId, nIdx);
+        } else {
+          nIdx++;
+        }
+      }
       if (GetNumFanins(nId) <= 1 || FindFanin(nId, GetConst0()) != -1) {
         vTrav_[nId] = uTrav_;
       }

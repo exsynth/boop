@@ -10,6 +10,7 @@ namespace boop {
 
 template <typename Ntk> void RunFast(Ntk *pNtk) {
   assert(pNtk != nullptr);
+  pNtk->Sweep();
   pNtk->TrivialCollapse();
   pNtk->Sweep();
   pNtk->BalancedDecompose();
