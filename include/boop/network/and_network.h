@@ -29,6 +29,14 @@ public:
   AndNetwork();
   AndNetwork(const AndNetwork &other);
 
+  // conversion between node and edge
+  int Node2Edge(int nId, bool fCompl) const {
+    return (nId << 1) + static_cast<int>(fCompl);
+  }
+  int Edge2Node(int nEdge) const { return nEdge >> 1; }
+  bool EdgeIsCompl(int nEdge) const { return nEdge & 1; }
+  int ComplEdge(int nEdge) const { return nEdge ^ 1; }
+
   // initialization (should not be called after optimization has started)
   void Clear(bool fClearNetwork = true, bool fClearCallbacks = true,
              bool fClearBackups = true);
@@ -37,6 +45,11 @@ public:
   int AddAnd(int nId0, int nId1, bool fCompl0, bool fCompl1);
   int AddAnd(const std::vector<int> &vFanins, const std::vector<bool> &vCompls);
   int AddPo(int nId, bool fCompl);
+  int AddAndEdge(int nEdge0, int nEdge1);
+  int AddOrEdge(int nEdge0, int nEdge1);
+  int AddXorEdge(int nEdge0, int nEdge1);
+  int AddMuxEdge(int nCondition, int nThen, int nElse);
+  int AddPoEdge(int nEdge);
   void ChangePiOrder(const std::vector<int> &vOrder);
 
   // network properties
@@ -201,14 +214,6 @@ private:
   // backups
   std::vector<AndNetwork> vBackups_;
 
-  // conversion between node and edge
-  int Node2Edge(int nId, bool fCompl) const {
-    return (nId << 1) + static_cast<int>(fCompl);
-  }
-  int Edge2Node(int nEdge) const { return nEdge >> 1; }
-  bool EdgeIsCompl(int nEdge) const { return nEdge & 1; }
-  int ComplEdge(int nEdge) const { return nEdge ^ 1; }
-
   // helpers
   int CreateNode();
   void ComputeLevels() const;
@@ -328,6 +333,47 @@ inline int AndNetwork::AddPo(int nId, bool fCompl) {
   vRefs_[nId]++;
   vvFaninEdges_.emplace_back(
       std::initializer_list<int>{Node2Edge(nId, fCompl)});
+  vRefs_.push_back(0);
+  return nNodes_++;
+}
+
+inline int AndNetwork::AddAndEdge(int nEdge0, int nEdge1) {
+  assert(Edge2Node(nEdge0) >= 0 && Edge2Node(nEdge0) < nNodes_);
+  assert(Edge2Node(nEdge1) >= 0 && Edge2Node(nEdge1) < nNodes_);
+  fLevelsValid_ = false;
+  assert(!check_int_max(nNodes_));
+  lInts_.push_back(nNodes_);
+  sInts_.insert(nNodes_);
+  vRefs_[Edge2Node(nEdge0)]++;
+  vRefs_[Edge2Node(nEdge1)]++;
+  vvFaninEdges_.emplace_back(std::initializer_list<int>{nEdge0, nEdge1});
+  vRefs_.push_back(0);
+  return Node2Edge(nNodes_++, false);
+}
+
+inline int AndNetwork::AddOrEdge(int nEdge0, int nEdge1) {
+  return ComplEdge(AddAndEdge(ComplEdge(nEdge0), ComplEdge(nEdge1)));
+}
+
+inline int AndNetwork::AddXorEdge(int nEdge0, int nEdge1) {
+  int nEdge0Only = AddAndEdge(nEdge0, ComplEdge(nEdge1));
+  int nEdge1Only = AddAndEdge(ComplEdge(nEdge0), nEdge1);
+  return AddOrEdge(nEdge0Only, nEdge1Only);
+}
+
+inline int AndNetwork::AddMuxEdge(int nCondition, int nThen, int nElse) {
+  int nWhenTrue = AddAndEdge(nCondition, nThen);
+  int nWhenFalse = AddAndEdge(ComplEdge(nCondition), nElse);
+  return AddOrEdge(nWhenTrue, nWhenFalse);
+}
+
+inline int AndNetwork::AddPoEdge(int nEdge) {
+  assert(Edge2Node(nEdge) >= 0 && Edge2Node(nEdge) < nNodes_);
+  fLevelsValid_ = false;
+  assert(!check_int_max(nNodes_));
+  vPos_.push_back(nNodes_);
+  vRefs_[Edge2Node(nEdge)]++;
+  vvFaninEdges_.emplace_back(std::initializer_list<int>{nEdge});
   vRefs_.push_back(0);
   return nNodes_++;
 }

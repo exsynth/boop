@@ -74,13 +74,13 @@ int ReadAigString(const std::string &strAig, Ntk *pNtk) {
   for (int i = nPis + nLatches + 1; i < nObjs; i++) {
     int nLit0 = i + i - DecodeAig(ssInput);
     int nLit1 = nLit0 - DecodeAig(ssInput);
-    pNtk->AddAnd(nLit1 >> 1, nLit0 >> 1, nLit1 & 1, nLit0 & 1);
+    pNtk->AddAndEdge(nLit1, nLit0);
   }
   for (int i = 0; i < nLatches; i++) {
-    pNtk->AddPo(vLatches[i] >> 1, vLatches[i] & 1);
+    pNtk->AddPoEdge(vLatches[i]);
   }
   for (int i = 0; i < nPos; i++) {
-    pNtk->AddPo(vPos[i] >> 1, vPos[i] & 1);
+    pNtk->AddPoEdge(vPos[i]);
   }
   return nLatches;
 }

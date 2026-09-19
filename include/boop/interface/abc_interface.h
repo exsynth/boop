@@ -46,17 +46,25 @@ template <typename Ntk> void GiaReader(Gia_Man_t *pGia, Ntk *pNtk) {
   int nObjId;
   Gia_Obj_t *pObj;
   pNtk->Reserve(Gia_ManObjNum(pGia));
-  Gia_ManConst0(pGia)->Value = pNtk->GetConst0();
+  Gia_ManConst0(pGia)->Value = pNtk->Node2Edge(pNtk->GetConst0(), false);
   Gia_ManForEachObj1(pGia, pObj, nObjId) {
     if (Gia_ObjIsCi(pObj)) {
-      pObj->Value = pNtk->AddPi();
+      pObj->Value = pNtk->Node2Edge(pNtk->AddPi(), false);
     } else if (Gia_ObjIsCo(pObj)) {
-      pNtk->AddPo(Gia_ObjFanin0(pObj)->Value, Gia_ObjFaninC0(pObj));
+      pNtk->AddPoEdge(Gia_ObjFanin0Copy(pObj));
+    } else if (Gia_ObjIsBuf(pObj)) {
+      pObj->Value = Gia_ObjFanin0Copy(pObj);
     } else {
-      // TODO: support XOR (and BUF and MUX?), maybe create another function
-      pObj->Value =
-          pNtk->AddAnd(Gia_ObjFanin0(pObj)->Value, Gia_ObjFanin1(pObj)->Value,
-                       Gia_ObjFaninC0(pObj), Gia_ObjFaninC1(pObj));
+      const int nEdge0 = Gia_ObjFanin0Copy(pObj);
+      const int nEdge1 = Gia_ObjFanin1Copy(pObj);
+      if (Gia_ObjIsMux(pGia, pObj)) {
+        const int nCondition = Gia_ObjFanin2Copy(pGia, pObj);
+        pObj->Value = pNtk->AddMuxEdge(nCondition, nEdge1, nEdge0);
+      } else if (Gia_ObjIsXor(pObj)) {
+        pObj->Value = pNtk->AddXorEdge(nEdge0, nEdge1);
+      } else {
+        pObj->Value = pNtk->AddAndEdge(nEdge0, nEdge1);
+      }
     }
   }
 }
