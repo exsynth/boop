@@ -1,3 +1,9 @@
+if(BOOP_USE_MOCKTURTLE)
+  add_executable(mockturtle_mapping_test mockturtle_mapping.cpp)
+  target_link_libraries(mockturtle_mapping_test PRIVATE boop::mockturtle_interface mockturtle)
+  add_test(NAME mockturtle_mapping COMMAND mockturtle_mapping_test)
+endif()
+
 if(NOT BOOP_BUILD_PROGRAMS)
   return()
 endif()
