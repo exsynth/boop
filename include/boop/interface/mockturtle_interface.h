@@ -13,7 +13,7 @@ template <typename Ntk, typename Rng>
 extern std::string MockturtlePerformLocal(Ntk *pNtk, Rng &rng);
 
 template <typename Ntk, typename Library>
-void MockturtleMap(const Ntk *pNtk, const Library &library,
+bool MockturtleMap(const Ntk *pNtk, const Library &library,
                    BoundNetwork *pMapped);
 
 } // namespace boop

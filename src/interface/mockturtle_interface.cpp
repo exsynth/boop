@@ -212,7 +212,7 @@ std::string MockturtlePerformLocal(Ntk *pNtk, Rng &rng) {
 }
 
 template <typename Ntk, typename Library>
-void MockturtleMap(const Ntk *pNtk, const Library &library,
+bool MockturtleMap(const Ntk *pNtk, const Library &library,
                    BoundNetwork *pMapped) {
   assert(pNtk != nullptr);
   assert(pMapped != nullptr);
@@ -220,8 +220,12 @@ void MockturtleMap(const Ntk *pNtk, const Library &library,
   mockturtle::aig_network *pAig = mockturtle_interface::CreateMockturtle(pNtk);
   mockturtle::emap_params params;
   params.map_multioutput = true;
-  const auto mapped = mockturtle::emap(*pAig, library, params);
+  mockturtle::emap_stats stats;
+  const auto mapped = mockturtle::emap(*pAig, library, params, &stats);
   delete pAig;
+  if (stats.mapping_error) {
+    return false;
+  }
 
   pMapped->Clear();
   std::vector<std::vector<int>> nodes(mapped.size());
@@ -229,14 +233,16 @@ void MockturtleMap(const Ntk *pNtk, const Library &library,
   nodes[mapped.get_node(mapped.get_constant(true))] = {pMapped->GetConst1()};
   pMapped->Reserve(mapped.size());
   mapped.foreach_pi([&](const auto node) { nodes[node] = {pMapped->AddPi()}; });
+  const auto mapped_node = [&](const auto signal) {
+    assert(!mapped.is_complemented(signal));
+    return nodes[mapped.get_node(signal)].at(mapped.get_output_pin(signal));
+  };
   mapped.foreach_gate([&](const auto node) {
     assert(mapped.has_cell(node));
     const int cell = static_cast<int>(mapped.get_cell_index(node));
     std::vector<int> fanins;
     mapped.foreach_fanin(node, [&](const auto fanin) {
-      assert(!mapped.is_complemented(fanin));
-      fanins.push_back(
-          nodes[mapped.get_node(fanin)].at(mapped.get_output_pin(fanin)));
+      fanins.push_back(mapped_node(fanin));
     });
     const int instance = pMapped->AddCell(cell, fanins);
     const int output_count = pMapped->GetLibrary()->GetNumOutputs(cell);
@@ -247,17 +253,16 @@ void MockturtleMap(const Ntk *pNtk, const Library &library,
     }
   });
   mapped.foreach_po([&](const auto output) {
-    assert(!mapped.is_complemented(output));
-    pMapped->AddPo(
-        nodes[mapped.get_node(output)].at(mapped.get_output_pin(output)));
+    pMapped->AddPo(mapped_node(output));
   });
+  return true;
 }
 
 template std::string
 MockturtlePerformLocal<AndNetwork, std::mt19937>(AndNetwork *pNtk,
                                                  std::mt19937 &rng);
 
-template void MockturtleMap<AndNetwork, mockturtle::tech_library<6>>(
+template bool MockturtleMap<AndNetwork, mockturtle::tech_library<6>>(
     const AndNetwork *pNtk, const mockturtle::tech_library<6> &library,
     BoundNetwork *pMapped);
 
