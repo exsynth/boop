@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -12,6 +13,8 @@
 BOOP_HEADER_START
 
 namespace boop {
+
+struct CellLibraryMockturtleAccess;
 
 class CellLibrary {
 public:
@@ -63,12 +66,19 @@ private:
     std::vector<std::vector<TimingArc>> vvTimingArcs;
   };
 
+  struct MappingCache;
   std::vector<Cell> vCells_;
+  mutable std::shared_ptr<MappingCache> pMappingCache_;
+
+  friend struct CellLibraryMockturtleAccess;
 };
 
 // initialization
 
-inline void CellLibrary::Clear() { vCells_.clear(); }
+inline void CellLibrary::Clear() {
+  vCells_.clear();
+  pMappingCache_.reset();
+}
 
 inline void CellLibrary::Reserve(int nReserve) { vCells_.reserve(nReserve); }
 
@@ -84,17 +94,19 @@ inline int CellLibrary::AddCell(
   assert(int_size(vMaxLoads) == int_size(vOutputFunctions));
   assert(int_size(vOutputAreas) == int_size(vOutputFunctions));
   assert(int_size(vvTimingArcs) == int_size(vOutputFunctions));
-  for (const std::vector<TimingArc> &vArcs : vvTimingArcs) {
-    assert(int_size(vArcs) == int_size(vInputNames));
-  }
+  assert(std::all_of(vvTimingArcs.begin(), vvTimingArcs.end(),
+                     [&](const std::vector<TimingArc> &vArcs) {
+                       return int_size(vArcs) == int_size(vInputNames);
+                     }));
   assert(std::none_of(vCells_.begin(), vCells_.end(), [&](const Cell &cell) {
     return cell.strName == strName;
   }));
-  int nCell = int_size(vCells_);
+  const int nCell = int_size(vCells_);
   vCells_.push_back(Cell{std::move(strName), std::move(vInputNames),
                          std::move(vInputLoads), std::move(vOutputNames),
                          std::move(vMaxLoads), std::move(vOutputFunctions),
                          std::move(vOutputAreas), std::move(vvTimingArcs)});
+  pMappingCache_.reset();
   return nCell;
 }
 

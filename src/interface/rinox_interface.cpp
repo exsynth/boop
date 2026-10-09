@@ -11,90 +11,13 @@
 #include <rinox/network/network.hpp>
 #include <rinox/opto/algorithms/resynthesize.hpp>
 
+#include "../library/cell_library_internal.h"
+
 BOOP_IMPL_START
 
 namespace boop {
 
 namespace {
-
-mockturtle::phase_type ConvertPinPhase(CellLibrary::PinPhase phase) {
-  switch (phase) {
-  case CellLibrary::UNKNOWN:
-    return mockturtle::phase_type::UNKNOWN;
-  case CellLibrary::INV:
-    return mockturtle::phase_type::INV;
-  case CellLibrary::NONINV:
-    return mockturtle::phase_type::NONINV;
-  }
-  assert(false);
-  return mockturtle::phase_type::UNKNOWN;
-}
-
-mockturtle::pin MakeMockturtlePin(const CellLibrary *pLibrary, int nCell,
-                                  int nOutput, int nInput) {
-  const CellLibrary::TimingArc &arc =
-      pLibrary->GetTimingArc(nCell, nOutput, nInput);
-  return mockturtle::pin{pLibrary->GetInputName(nCell, nInput),
-                         ConvertPinPhase(arc.phase),
-                         pLibrary->GetInputLoad(nCell, nInput),
-                         pLibrary->GetMaxLoad(nCell, nOutput),
-                         arc.dRiseBlockDelay,
-                         arc.dRiseFanoutDelay,
-                         arc.dFallBlockDelay,
-                         arc.dFallFanoutDelay};
-}
-
-std::vector<mockturtle::pin> BuildMockturtlePins(const CellLibrary *pLibrary,
-                                                 int nCell, int nOutput) {
-  std::vector<mockturtle::pin> vPins;
-  vPins.reserve(pLibrary->GetNumInputs(nCell));
-  for (int i = 0; i < pLibrary->GetNumInputs(nCell); ++i) {
-    vPins.push_back(MakeMockturtlePin(pLibrary, nCell, nOutput, i));
-  }
-  return vPins;
-}
-
-std::vector<std::string> GetInputNames(const CellLibrary *pLibrary, int nCell) {
-  std::vector<std::string> vInputNames;
-  vInputNames.reserve(pLibrary->GetNumInputs(nCell));
-  for (int i = 0; i < pLibrary->GetNumInputs(nCell); ++i) {
-    vInputNames.push_back(pLibrary->GetInputName(nCell, i));
-  }
-  return vInputNames;
-}
-
-std::vector<mockturtle::gate> BuildMockturtleGatesFromLibrary(
-    const CellLibrary *pLibrary,
-    std::vector<std::vector<unsigned>> &vvBindingIds,
-    std::vector<int> &vCellIdsByBindingId) {
-  std::vector<mockturtle::gate> vGates;
-  vvBindingIds.resize(pLibrary->GetNumCells());
-  for (int nCell = 0; nCell < pLibrary->GetNumCells(); ++nCell) {
-    const int nInputs = pLibrary->GetNumInputs(nCell);
-    const int nOutputs = pLibrary->GetNumOutputs(nCell);
-    const std::vector<std::string> vInputNames = GetInputNames(pLibrary, nCell);
-    for (int i = 0; i < nOutputs; ++i) {
-      const unsigned nBindingId = static_cast<unsigned>(int_size(vGates));
-      const std::string &strFunction = pLibrary->GetOutputFunction(nCell, i);
-      kitty::dynamic_truth_table tt{static_cast<uint32_t>(nInputs)};
-      bool fParsed = kitty::create_from_formula(tt, strFunction, vInputNames);
-      assert(fParsed);
-      (void)fParsed;
-      vGates.push_back(mockturtle::gate{
-          nBindingId,
-          pLibrary->GetCellName(nCell),
-          strFunction,
-          static_cast<uint32_t>(nInputs),
-          tt,
-          pLibrary->GetOutputArea(nCell, i),
-          BuildMockturtlePins(pLibrary, nCell, i),
-          pLibrary->GetOutputName(nCell, i)});
-      vvBindingIds[nCell].push_back(nBindingId);
-      vCellIdsByBindingId.push_back(nCell);
-    }
-  }
-  return vGates;
-}
 
 template <typename RinoxNetwork>
 RinoxNetwork *CreateRinox(BoundNetwork *pNtk,
@@ -192,10 +115,10 @@ void RinoxExecute(BoundNetwork *pNtk) {
   for (int nCell = 0; nCell < pLibrary->GetNumCells(); ++nCell) {
     assert(pLibrary->GetNumOutputs(nCell) <= 4);
   }
-  std::vector<std::vector<unsigned>> vvBindingIds;
-  std::vector<int> vCellIdsByBindingId;
-  std::vector<mockturtle::gate> vGates = BuildMockturtleGatesFromLibrary(
-      pLibrary, vvBindingIds, vCellIdsByBindingId);
+  const auto &vGates = CellLibraryMockturtleAccess::Gates(*pLibrary);
+  const auto &vvBindingIds = CellLibraryMockturtleAccess::BindingIds(*pLibrary);
+  const auto &vCellIdsByBindingId =
+      CellLibraryMockturtleAccess::CellIdsByBindingId(*pLibrary);
   using RinoxNetwork =
       rinox::network::bound_network<rinox::network::design_type_t::CELL_BASED,
                                     4>;

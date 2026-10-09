@@ -87,11 +87,29 @@ if(BOOP_USE_RINOX)
   add_subdirectory(third_party/rinox)
   target_compile_definitions(boop_rinox_interface PRIVATE
     BOOP_USE_RINOX
+    BOOP_USE_MOCKTURTLE_LIBRARY
   )
   target_link_libraries(boop_rinox_interface PRIVATE
     rinox::rinox
   )
 endif()
+
+add_library(boop_cell_library src/library/cell_library.cpp)
+add_library(boop::cell_library ALIAS boop_cell_library)
+target_link_libraries(boop_cell_library PUBLIC
+  boop::headers
+)
+if(BOOP_USE_MOCKTURTLE OR BOOP_USE_RINOX)
+  target_compile_definitions(boop_cell_library PRIVATE
+    BOOP_USE_MOCKTURTLE_LIBRARY
+  )
+  target_link_libraries(boop_cell_library PRIVATE
+    mockturtle
+  )
+endif()
+target_link_libraries(boop_rinox_interface PUBLIC
+  boop::cell_library
+)
 
 if(BOOP_USE_ARGPARSE)
   target_compile_definitions(boop_headers INTERFACE BOOP_USE_ARGPARSE)
@@ -114,9 +132,13 @@ add_library(boop_mockturtle_interface src/interface/mockturtle_interface.cpp)
 add_library(boop::mockturtle_interface ALIAS boop_mockturtle_interface)
 target_link_libraries(boop_mockturtle_interface PUBLIC
   boop::headers
+  boop::cell_library
 )
 if(BOOP_USE_MOCKTURTLE)
-  target_compile_definitions(boop_mockturtle_interface PRIVATE BOOP_USE_MOCKTURTLE)
+  target_compile_definitions(boop_mockturtle_interface PRIVATE
+    BOOP_USE_MOCKTURTLE
+    BOOP_USE_MOCKTURTLE_LIBRARY
+  )
   target_link_libraries(boop_mockturtle_interface PRIVATE
     mockturtle
   )

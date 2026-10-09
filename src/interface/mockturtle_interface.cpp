@@ -26,6 +26,8 @@
 #include <mockturtle/views/fanout_view.hpp>
 #include <mockturtle/views/topo_view.hpp>
 
+#include "../library/cell_library_internal.h"
+
 BOOP_IMPL_START
 
 namespace boop {
@@ -211,17 +213,19 @@ std::string MockturtlePerformLocal(Ntk *pNtk, Rng &rng) {
   return mockturtle_interface::PerformLocal(pNtk, rng);
 }
 
-template <typename Ntk, typename Library>
-bool MockturtleMap(const Ntk *pNtk, const Library &library,
-                   BoundNetwork *pMapped) {
+template <typename Ntk>
+bool MockturtleMap(const Ntk *pNtk, BoundNetwork *pMapped) {
   assert(pNtk != nullptr);
   assert(pMapped != nullptr);
+  const CellLibrary *pLibrary = pMapped->GetLibrary();
+  assert(pLibrary != nullptr);
 
   mockturtle::aig_network *pAig = mockturtle_interface::CreateMockturtle(pNtk);
   mockturtle::emap_params params;
   params.map_multioutput = true;
   mockturtle::emap_stats stats;
-  const auto mapped = mockturtle::emap(*pAig, library, params, &stats);
+  const auto mapped = mockturtle::emap(
+      *pAig, CellLibraryMockturtleAccess::Mapping(*pLibrary), params, &stats);
   delete pAig;
   if (stats.mapping_error) {
     return false;
@@ -262,9 +266,8 @@ template std::string
 MockturtlePerformLocal<AndNetwork, std::mt19937>(AndNetwork *pNtk,
                                                  std::mt19937 &rng);
 
-template bool MockturtleMap<AndNetwork, mockturtle::tech_library<6>>(
-    const AndNetwork *pNtk, const mockturtle::tech_library<6> &library,
-    BoundNetwork *pMapped);
+template bool MockturtleMap<AndNetwork>(const AndNetwork *pNtk,
+                                        BoundNetwork *pMapped);
 
 } // namespace boop
 
