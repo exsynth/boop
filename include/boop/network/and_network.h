@@ -463,7 +463,7 @@ inline bool AndNetwork::IsPo(int nId) const {
 
 inline NodeType AndNetwork::GetNodeType(int nId) const {
   if (nId == GetConst0()) {
-    return CONST;
+    return CONSTANT;
   }
   if (IsPi(nId)) {
     return PI;

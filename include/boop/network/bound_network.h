@@ -158,8 +158,8 @@ inline void BoundNetwork::Clear(bool fClearNetwork, bool fClearBackups) {
     vvOtherOutputs_.clear();
     vDontTouches_.clear();
     vDontShares_.clear();
-    CreateNode(CONST);
-    CreateNode(CONST);
+    CreateNode(CONSTANT);
+    CreateNode(CONSTANT);
   }
   if (fClearBackups) {
     vBackups_.clear();
@@ -293,7 +293,7 @@ inline NodeType BoundNetwork::GetNodeType(int nId) const {
 
 inline bool BoundNetwork::IsConst(int nId) const {
   assert(nId >= 0 && nId < GetNumNodes());
-  return vNodeTypes_[nId] == CONST;
+  return vNodeTypes_[nId] == CONSTANT;
 }
 
 inline bool BoundNetwork::IsCell(int nId) const {
