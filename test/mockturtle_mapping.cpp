@@ -54,8 +54,10 @@ int main() {
   }
 
   boop::AndNetwork constant_network;
-  constant_network.AddPoEdge(constant_network.Node2Edge(constant_network.GetConst0(), false));
-  constant_network.AddPoEdge(constant_network.Node2Edge(constant_network.GetConst0(), true));
+  constant_network.AddPoEdge(
+      constant_network.Node2Edge(constant_network.GetConst0(), false));
+  constant_network.AddPoEdge(
+      constant_network.Node2Edge(constant_network.GetConst0(), true));
 
   boop::BoundNetwork constant_mapped(&cell_library);
   if (!boop::MockturtleMap(&constant_network, &constant_mapped)) {
@@ -71,7 +73,8 @@ int main() {
   }
 
   boop::CellLibrary no_tie_cell_library;
-  no_tie_cell_library.AddCell("buf", {"a"}, {1.0}, {"Y"}, {999.0}, {"a"}, {1.0}, {{arc}});
+  no_tie_cell_library.AddCell("buf", {"a"}, {1.0}, {"Y"}, {999.0}, {"a"}, {1.0},
+                              {{arc}});
   boop::BoundNetwork failed_mapping(&no_tie_cell_library);
   failed_mapping.AddPi();
   const int old_node_count = failed_mapping.GetNumNodes();

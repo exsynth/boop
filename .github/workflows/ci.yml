@@ -5,6 +5,23 @@ on:
   pull_request:
 
 jobs:
+  format:
+    name: format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: sudo apt-get install -y clang-format
+
+      - name: Check formatting
+        run: |
+          git ls-files -z '*.c' '*.cc' '*.cpp' '*.h' '*.hpp' \
+            | grep -zv '^third_party/' \
+            | xargs -0 clang-format --dry-run --Werror -style=file
+
   build:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest

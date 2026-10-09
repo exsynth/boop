@@ -3,9 +3,9 @@
 int main(int argc, char **argv) {
   char pInputPath[4096] = {};
   char pOutputPath[4096] = {};
-  int nStatus = boop_fast_parse_argv(pInputPath, sizeof(pInputPath),
-                                     pOutputPath, sizeof(pOutputPath), argc,
-                                     argv);
+  int nStatus =
+      boop_fast_parse_argv(pInputPath, sizeof(pInputPath), pOutputPath,
+                           sizeof(pOutputPath), argc, argv);
   if (nStatus != 0) {
     return nStatus;
   }

@@ -106,11 +106,11 @@ private:
   int nNodes_; // number of allocated nodes
   std::vector<int> vPis_;
   std::vector<int> vPos_;
-  std::vector<int> vInts_;        // internal nodes in topological order
-  std::set<int> sInts_;           // internal nodes as a set
+  std::vector<int> vInts_; // internal nodes in topological order
+  std::set<int> sInts_;    // internal nodes as a set
   std::vector<int> vNodeTypes_;
-  std::vector<int> vCells_;       // library cell ids
-  std::vector<int> vInstances_;   // representative node id of instance
+  std::vector<int> vCells_;     // library cell ids
+  std::vector<int> vInstances_; // representative node id of instance
   std::vector<int> vOutputIndices_;
   std::vector<std::vector<int>> vvFanins_;
   std::vector<std::vector<Ref>> vvFanouts_;
@@ -187,8 +187,7 @@ inline int BoundNetwork::AddPi() {
   return nId;
 }
 
-inline int BoundNetwork::AddCell(int nCell,
-                                 const std::vector<int> &vFanins) {
+inline int BoundNetwork::AddCell(int nCell, const std::vector<int> &vFanins) {
   assert(nCell >= 0 && nCell < pLibrary_->GetNumCells());
   assert(int_size(vFanins) == pLibrary_->GetNumInputs(nCell));
   return CreateBoundInstance(CELL, nCell, vFanins,

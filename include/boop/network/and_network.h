@@ -1686,8 +1686,7 @@ inline void AndNetwork::BalancedDecompose() {
         int nOldIdx = mIndices.at(nFaninEdge);
         if (nOldIdx != nNewIdx) {
           int nOtherEdge = vvFaninEdges_[nId][nNewIdx];
-          std::swap(vvFaninEdges_[nId][nOldIdx],
-                    vvFaninEdges_[nId][nNewIdx]);
+          std::swap(vvFaninEdges_[nId][nOldIdx], vvFaninEdges_[nId][nNewIdx]);
           mIndices[nFaninEdge] = nNewIdx;
           mIndices[nOtherEdge] = nOldIdx;
           fSorted = true;
@@ -1707,10 +1706,9 @@ inline void AndNetwork::BalancedDecompose() {
       int nNewFaninEdge = Node2Edge(nNewFi, false);
       mIndices.emplace(nNewFaninEdge, GetNumFanins(nId) - 1);
       vLevels_.resize(nNodes_);
-      vLevels_[nNewFi] =
-          std::max(vLevels_[GetFanin(nNewFi, 0)],
-                   vLevels_[GetFanin(nNewFi, 1)]) +
-          1;
+      vLevels_[nNewFi] = std::max(vLevels_[GetFanin(nNewFi, 0)],
+                                  vLevels_[GetFanin(nNewFi, 1)]) +
+                         1;
       fanins.emplace(vLevels_[nNewFi], nNewFaninEdge);
     }
     vLevels_[nId] = 0;

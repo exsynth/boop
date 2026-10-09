@@ -20,26 +20,22 @@ namespace boop {
 namespace {
 
 template <typename RinoxNetwork>
-RinoxNetwork *CreateRinox(BoundNetwork *pNtk,
-                          const std::vector<mockturtle::gate> &vGates,
-                          const std::vector<std::vector<unsigned>>
-                              &vvBindingIds) {
+RinoxNetwork *
+CreateRinox(BoundNetwork *pNtk, const std::vector<mockturtle::gate> &vGates,
+            const std::vector<std::vector<unsigned>> &vvBindingIds) {
   RinoxNetwork *pNtkRinox = new RinoxNetwork(vGates);
   using signal = typename RinoxNetwork::signal;
   std::vector<signal> vSignals(pNtk->GetNumNodes());
   vSignals[0] = pNtkRinox->get_constant(false);
   vSignals[1] = pNtkRinox->get_constant(true);
-  pNtk->ForEachPi([&](int nId) {
-    vSignals[nId] = pNtkRinox->create_pi();
-  });
+  pNtk->ForEachPi([&](int nId) { vSignals[nId] = pNtkRinox->create_pi(); });
   pNtk->ForEachInstance([&](int nInstance) {
     assert(pNtk->IsCell(nInstance));
     const int nCell = pNtk->GetCell(nInstance);
     std::vector<signal> vChildren;
     vChildren.reserve(pNtk->GetNumFanins(nInstance));
-    pNtk->ForEachFanin(nInstance, [&](int nId) {
-      vChildren.push_back(vSignals[nId]);
-    });
+    pNtk->ForEachFanin(nInstance,
+                       [&](int nId) { vChildren.push_back(vSignals[nId]); });
     signal sig = pNtkRinox->create_node(vChildren, vvBindingIds[nCell]);
     for (int i = 0; i < pNtk->GetNumOutputs(nInstance); ++i) {
       const int nId = pNtk->GetOutput(nInstance, i);
@@ -60,9 +56,7 @@ void RinoxReader(const RinoxNetwork &ntkSrc, BoundNetwork *pNtk,
   std::vector<std::vector<int>> vSignals(ntkSrc.size());
   vSignals[0] = {pNtk->GetConst0()};
   vSignals[1] = {pNtk->GetConst1()};
-  ntkSrc.foreach_pi([&](auto nPi) {
-    vSignals[nPi] = {pNtk->AddPi()};
-  });
+  ntkSrc.foreach_pi([&](auto nPi) { vSignals[nPi] = {pNtk->AddPi()}; });
   ntkSrc.foreach_gate([&](auto nGate) {
     if (ntkSrc.is_dead(nGate)) {
       return;
@@ -79,20 +73,18 @@ void RinoxReader(const RinoxNetwork &ntkSrc, BoundNetwork *pNtk,
       vSignals[nGate].push_back(pNtk->GetOutput(nInstance, i));
     }
   });
-  ntkSrc.foreach_po([&](auto sig) {
-    pNtk->AddPo(vSignals[sig.index][sig.output]);
-  });
+  ntkSrc.foreach_po(
+      [&](auto sig) { pNtk->AddPo(vSignals[sig.index][sig.output]); });
 }
 
 template <typename RinoxNetwork>
 void RunRinoxOptimization(RinoxNetwork &ntk,
                           const std::vector<mockturtle::gate> &vGates) {
-  rinox::libraries::augmented_library<
-      rinox::network::design_type_t::CELL_BASED>
+  rinox::libraries::augmented_library<rinox::network::design_type_t::CELL_BASED>
       augmentedLibrary(vGates);
   using Params = rinox::opto::algorithms::default_resynthesis_params<12>;
-  using Database = rinox::databases::mapped_database<RinoxNetwork,
-                                                     Params::max_num_vars>;
+  using Database =
+      rinox::databases::mapped_database<RinoxNetwork, Params::max_num_vars>;
   Database database(augmentedLibrary);
   Params params;
   params.try_rewire = true;
@@ -125,9 +117,10 @@ void RinoxExecute(BoundNetwork *pNtk) {
   RinoxNetwork *pNtkRinox =
       CreateRinox<RinoxNetwork>(pNtk, vGates, vvBindingIds);
   RunRinoxOptimization(*pNtkRinox, vGates);
-  pNtk->Read(*pNtkRinox, [&](const RinoxNetwork &ntkSrc, BoundNetwork *pNtkDst) {
-    RinoxReader(ntkSrc, pNtkDst, vCellIdsByBindingId);
-  });
+  pNtk->Read(*pNtkRinox,
+             [&](const RinoxNetwork &ntkSrc, BoundNetwork *pNtkDst) {
+               RinoxReader(ntkSrc, pNtkDst, vCellIdsByBindingId);
+             });
   delete pNtkRinox;
 }
 
@@ -141,9 +134,7 @@ BOOP_IMPL_START
 
 namespace boop {
 
-void RinoxExecute(BoundNetwork *pNtk) {
-  (void)pNtk;
-}
+void RinoxExecute(BoundNetwork *pNtk) { (void)pNtk; }
 
 } // namespace boop
 

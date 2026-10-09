@@ -245,9 +245,8 @@ bool MockturtleMap(const Ntk *pNtk, BoundNetwork *pMapped) {
     assert(mapped.has_cell(node));
     const int cell = static_cast<int>(mapped.get_cell_index(node));
     std::vector<int> fanins;
-    mapped.foreach_fanin(node, [&](const auto fanin) {
-      fanins.push_back(mapped_node(fanin));
-    });
+    mapped.foreach_fanin(
+        node, [&](const auto fanin) { fanins.push_back(mapped_node(fanin)); });
     const int instance = pMapped->AddCell(cell, fanins);
     const int output_count = pMapped->GetLibrary()->GetNumOutputs(cell);
     assert(mapped.num_outputs(node) == static_cast<uint32_t>(output_count));
@@ -256,9 +255,8 @@ bool MockturtleMap(const Ntk *pNtk, BoundNetwork *pMapped) {
       nodes[node].push_back(pMapped->GetOutput(instance, output));
     }
   });
-  mapped.foreach_po([&](const auto output) {
-    pMapped->AddPo(mapped_node(output));
-  });
+  mapped.foreach_po(
+      [&](const auto output) { pMapped->AddPo(mapped_node(output)); });
   return true;
 }
 
