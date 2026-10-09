@@ -20,7 +20,7 @@ int main() {
   cell_library.AddCell("buf", {"a"}, {1.0}, {"Y"}, {999.0}, {"a"}, {1.0},
                        {{arc}});
   cell_library.AddCell("ha", {"a", "b"}, {1.0, 1.0}, {"S", "C"}, {999.0, 999.0},
-                       {"a^b", "a*b"}, {2.0, 2.0}, {{arc, arc}, {arc, arc}});
+                       {"a^b", "a*b"}, {1.5, 1.5}, {{arc, arc}, {arc, arc}});
 
   boop::AndNetwork network;
   const int a = network.AddPi();
