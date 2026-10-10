@@ -39,7 +39,7 @@ public:
 
   using This = Solver<Internal, Logic, Cardi>;
   friend class Logic<This>;
-  friend class Cardi<This>;
+  friend Cardi<This>;
 
   Logic<This> logic;
   Cardi<This> cardinality;

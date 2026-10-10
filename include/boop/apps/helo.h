@@ -142,7 +142,7 @@ private:
     switch (params_.nSat) {
     case 0: {
       using Sol = solver::Solver<solver::CadicalSolver, solver::LogicEncoder,
-                                 solver::CardinalityEncoder>;
+                                 solver::DefaultCardinalityEncoder>;
       using Sat = rrr::SatBasedSolver<Ntk, Sol>;
       typename Sat::Parameter parSat;
       LowerSatParams(parSat);

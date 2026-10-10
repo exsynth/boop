@@ -31,10 +31,20 @@ jobs:
       matrix:
         include:
           - name: default
+            c_compiler: gcc
+            cxx_compiler: g++
+            options: ""
+          - name: default-clang
+            c_compiler: clang
+            cxx_compiler: clang++
             options: ""
           - name: abc-cadical
+            c_compiler: gcc
+            cxx_compiler: g++
             options: "-DBOOP_USE_CADICAL_IN_ABC=ON"
           - name: without-abc-mockturtle
+            c_compiler: gcc
+            cxx_compiler: g++
             options: "-DBOOP_USE_ABC=OFF -DBOOP_USE_MOCKTURTLE=OFF"
 
     steps:
@@ -46,10 +56,12 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libreadline-dev
+          sudo apt-get install -y clang libreadline-dev
 
       - name: Configure
-        run: cmake -S . -B build/${{ matrix.name }} -DCMAKE_BUILD_TYPE=Release ${{ matrix.options }}
+        run: |
+          CC=${{ matrix.c_compiler }} CXX=${{ matrix.cxx_compiler }} \
+            cmake -S . -B build/${{ matrix.name }} -DCMAKE_BUILD_TYPE=Release ${{ matrix.options }}
 
       - name: Build
         run: cmake --build build/${{ matrix.name }} --parallel 2

@@ -96,6 +96,9 @@ private:
                    int k);
 };
 
+template <class Solver>
+using DefaultCardinalityEncoder = CardinalityEncoder<Solver>;
+
 // lifecycle
 
 template <class Solver, bool kDirect, AmoMethod kAmoMethod, int kBimSize,
